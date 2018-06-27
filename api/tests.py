@@ -48,4 +48,4 @@ class ViewTestCase(TestCase):
     def test_unauth_api_cannot_create_entry(self):
         """Test the api supports only authenticated users."""
         self.post()
-        self.assertEqual(self.response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
