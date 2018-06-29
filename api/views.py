@@ -19,6 +19,6 @@ class CreateView(generics.ListCreateAPIView):
 
 class DetailsView(generics.RetrieveUpdateDestroyAPIView):
     """This class handles the http GET, PUT and DELETE requests."""
-
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
+    permission_classes = (IsAuthenticated,)

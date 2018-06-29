@@ -33,6 +33,12 @@ class ViewTestCase(TestCase):
         self.user = User.objects.create_user(username='john', password='john')
         self.entry_data = {'text': 'Write code for BuJo API'}
 
+    def login(self):
+        self.client.login(username='john', password='john')
+
+    def logout(self):
+        self.client.logout()
+
     def post(self):
         self.response = self.client.post(
             reverse('create'),
@@ -40,27 +46,49 @@ class ViewTestCase(TestCase):
             format="json")
 
     def create_authenticated_entry(self):
-        self.client.login(username='john', password='john')
+        self.login()
         self.post()
-        self.client.logout()
+        self.logout()
+
+    def update_entry(self, entry_id):
+        change_entry = {'text': 'Changed Entry'}
+        response = self.client.put(
+            reverse('details', kwargs={'pk': entry_id}),
+            change_entry, format='json'
+        )
+        return response
 
     def test_api_can_create_an_entry(self):
         """Test the api has entry creation capability."""
         self.create_authenticated_entry()
         self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
-    
+
     def test_unauth_api_cannot_create_entry(self):
         """Test the api supports only authenticated users."""
         self.post()
         self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_api_can_get_all_entries(self):
+        """Test the api can get all entries."""
+        self.create_authenticated_entry()
+        self.create_authenticated_entry()
+
+        self.login()
+        response = self.client.get(reverse('create'), format="json")
+        self.logout()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
     def test_api_can_get_an_entry(self):
         """Test the api can get a given entry."""
         self.create_authenticated_entry()
         entry = Entry.objects.get()
+        self.login()
         response = self.client.get(
             reverse('details',
             kwargs={'pk': entry.id}), format="json")
+        self.logout()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertContains(response, entry)
@@ -71,23 +99,49 @@ class ViewTestCase(TestCase):
         change_entry = {'text': 'Changed Entry'}
         entry = Entry.objects.get()
 
-        res = self.client.put(
-            reverse('details', kwargs={'pk': entry.id}),
-            change_entry, format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.login()
+        response = self.update_entry(entry.id)
+        self.logout()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_api_can_delete_entry(self):
         """Test the api can delete an entry."""
         self.create_authenticated_entry()
         entry = Entry.objects.get()
+
+        self.login()
         response = self.client.delete(
             reverse('details', kwargs={'pk': entry.id}),
             format='json',
             follow=True)
+        self.logout()
 
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEquals(Entry.objects.count(), 0)
+
+    def test_unauth_api_cannot_get_put_delete_entry(self):
+        """ Test the api won't allow unauthenticated users to get/put/delete """
+        self.create_authenticated_entry()
+        entry = Entry.objects.get()
+        self.create_authenticated_entry()
+
+        response = self.client.get(reverse('create'), format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.get(
+            reverse('details',
+            kwargs={'pk': entry.id}), format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.update_entry(entry.id)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.delete(
+            reverse('details', kwargs={'pk': entry.id}),
+            format='json',
+            follow=True)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class AuthTestCase(TestCase):
