@@ -1,10 +1,10 @@
 from django.conf.urls import url, include
-from rest_framework.urlpatterns import format_suffix_patterns
-from views import CreateView, DetailsView
+from rest_framework.routers import DefaultRouter
+from views import EntryViewSet
 
-urlpatterns = {
-    url(r'^entries/$', CreateView.as_view(), name="create"),
-    url(r'^entries/(?P<pk>[0-9]+)/$', DetailsView.as_view(), name="details"),
-}
+router = DefaultRouter()
+router.register(r'entries', EntryViewSet)
 
-urlpatterns = format_suffix_patterns(urlpatterns)
+urlpatterns = [
+    url(r'^', include(router.urls))
+]

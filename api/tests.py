@@ -41,7 +41,7 @@ class ViewTestCase(TestCase):
 
     def post(self):
         self.response = self.client.post(
-            reverse('create'),
+            reverse('entry-list'),
             self.entry_data,
             format="json")
 
@@ -53,7 +53,7 @@ class ViewTestCase(TestCase):
     def update_entry(self, entry_id):
         change_entry = {'text': 'Changed Entry'}
         response = self.client.put(
-            reverse('details', kwargs={'pk': entry_id}),
+            reverse('entry-detail', kwargs={'pk': entry_id}),
             change_entry, format='json'
         )
         return response
@@ -74,7 +74,7 @@ class ViewTestCase(TestCase):
         self.create_authenticated_entry()
 
         self.login()
-        response = self.client.get(reverse('create'), format="json")
+        response = self.client.get(reverse('entry-list'), format="json")
         self.logout()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -86,7 +86,7 @@ class ViewTestCase(TestCase):
         entry = Entry.objects.get()
         self.login()
         response = self.client.get(
-            reverse('details',
+            reverse('entry-detail',
             kwargs={'pk': entry.id}), format="json")
         self.logout()
 
@@ -112,7 +112,7 @@ class ViewTestCase(TestCase):
 
         self.login()
         response = self.client.delete(
-            reverse('details', kwargs={'pk': entry.id}),
+            reverse('entry-detail', kwargs={'pk': entry.id}),
             format='json',
             follow=True)
         self.logout()
@@ -126,11 +126,11 @@ class ViewTestCase(TestCase):
         entry = Entry.objects.get()
         self.create_authenticated_entry()
 
-        response = self.client.get(reverse('create'), format="json")
+        response = self.client.get(reverse('entry-list'), format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         response = self.client.get(
-            reverse('details',
+            reverse('entry-detail',
             kwargs={'pk': entry.id}), format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -138,7 +138,7 @@ class ViewTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         response = self.client.delete(
-            reverse('details', kwargs={'pk': entry.id}),
+            reverse('entry-detail', kwargs={'pk': entry.id}),
             format='json',
             follow=True)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

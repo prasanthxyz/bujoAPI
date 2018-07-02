@@ -1,24 +1,16 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from rest_framework import generics
+from rest_framework import viewsets
 from serializers import EntrySerializer
 from models import Entry
 from rest_framework.permissions import IsAuthenticated
 
 
-class CreateView(generics.ListCreateAPIView):
-    """This class defines the create behavior of our rest api."""
+class EntryViewSet(viewsets.ModelViewSet):
+    """ Entry model viewset """
     queryset = Entry.objects.all()
     serializer_class = EntrySerializer
     permission_classes = (IsAuthenticated,)
 
     def perform_create(self, serializer):
-        """Save the post data when creating a new bucketlist."""
+        """Add user to entry while saving."""
         serializer.save(user=self.request.user)
-
-class DetailsView(generics.RetrieveUpdateDestroyAPIView):
-    """This class handles the http GET, PUT and DELETE requests."""
-    queryset = Entry.objects.all()
-    serializer_class = EntrySerializer
-    permission_classes = (IsAuthenticated,)
