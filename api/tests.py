@@ -1,8 +1,10 @@
 """ Entry App Tests """
 
+from datetime import timedelta
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+from django.utils.timezone import now
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
@@ -187,3 +189,80 @@ class AuthTestCase(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['token']), 40)
+
+
+class EntryQueryTestCase(TestCase):
+    """ Test suite for authentication """
+    def setUp(self):
+        self.client = APIClient()
+
+        # create two users
+        self.user_john = User.objects.create_user(username='john', password='john')
+        self.user_francis = User.objects.create_user(username='francis', password='francis')
+
+        self.current_time = now()
+        self.yesterday = self.current_time - timedelta(days=1)
+        self.two_days_ago = self.current_time - timedelta(days=2)
+
+        # create 3 entries each with set timestamps
+        entry = Entry.objects.create(text="Entry 1", user=self.user_john)
+        entry.date_created=self.yesterday
+        entry.save()
+        entry = Entry.objects.create(text="Entry 2", user=self.user_john)
+        entry.date_created=self.yesterday
+        entry.save()
+        entry = Entry.objects.create(text="Entry 3", user=self.user_john)
+
+        entry = Entry.objects.create(text="Entry 1", user=self.user_francis)
+        entry.date_created=self.yesterday
+        entry.save()
+        entry = Entry.objects.create(text="Entry 2", user=self.user_francis)
+        entry = Entry.objects.create(text="Entry 3", user=self.user_francis)
+
+    def test_api_gets_day_entries(self):
+        """ Testing the get_day_entries api """
+        # unauthorized request
+        response = self.client.get(reverse('entry-get-day-entries'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # testing responses for user 1
+        self.client.login(username='john', password='john')
+        response = self.client.get(reverse('entry-get-day-entries'))
+        self.assertIsNotNone(response.data)
+        self.assertEqual(len(response.data), 1)
+        entry_names = map(lambda entry: entry['text'], response.data)
+        self.assertIn('Entry 3', entry_names)
+
+        response = self.client.get(reverse('entry-get-day-entries') + '?day=' + str(self.yesterday))
+        self.assertIsNotNone(response.data)
+        self.assertEqual(len(response.data), 2)
+        entry_names = map(lambda entry: entry['text'], response.data)
+        self.assertIn('Entry 1', entry_names)
+        self.assertIn('Entry 2', entry_names)
+
+        response = self.client.get(reverse('entry-get-day-entries') + '?day=' + str(self.two_days_ago))
+        self.assertIsNotNone(response.data)
+        self.assertEqual(len(response.data), 0)
+
+        self.client.logout()
+
+        # testing responses for user 2
+        self.client.login(username='francis', password='francis')
+        response = self.client.get(reverse('entry-get-day-entries'))
+        self.assertIsNotNone(response.data)
+        self.assertEqual(len(response.data), 2)
+        entry_names = map(lambda entry: entry['text'], response.data)
+        self.assertIn('Entry 2', entry_names)
+        self.assertIn('Entry 3', entry_names)
+
+        response = self.client.get(reverse('entry-get-day-entries') + '?day=' + str(self.yesterday))
+        self.assertIsNotNone(response.data)
+        self.assertEqual(len(response.data), 1)
+        entry_names = map(lambda entry: entry['text'], response.data)
+        self.assertIn('Entry 1', entry_names)
+
+        response = self.client.get(reverse('entry-get-day-entries') + '?day=' + str(self.two_days_ago))
+        self.assertIsNotNone(response.data)
+        self.assertEqual(len(response.data), 0)
+
+        self.client.logout()
