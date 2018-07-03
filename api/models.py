@@ -20,12 +20,13 @@ class Entry(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
+    def __unicode__(self):
         """Return a human readable representation of the model instance."""
         return "{}".format(self.text)
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
+    """ Generate auth token on User creation """
     if created:
         Token.objects.create(user=instance)

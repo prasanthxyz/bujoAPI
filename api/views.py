@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
+""" Views for Api App """
+
 from rest_framework import viewsets
-from serializers import EntrySerializer
-from models import Entry
 from rest_framework.permissions import IsAuthenticated
+from api.serializers import EntrySerializer
+from api.models import Entry
 
 
 class EntryViewSet(viewsets.ModelViewSet):

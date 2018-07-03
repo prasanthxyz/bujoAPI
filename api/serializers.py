@@ -1,5 +1,7 @@
+""" Serializers for Api app """
+
 from rest_framework import serializers
-from models import Entry
+from api.models import Entry
 
 class EntrySerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
