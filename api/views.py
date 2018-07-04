@@ -1,13 +1,29 @@
 """ Views for Api App """
 
 from datetime import datetime
-import dateutil.parser
-from rest_framework import viewsets
+from rest_framework import generics, viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from api.serializers import EntrySerializer
+from api.serializers import CreateUserSerializer, EntrySerializer, UserSerializer
 from api.models import Entry
+import dateutil.parser
+
+
+class RegistrationAPI(generics.GenericAPIView):
+    """ Api for registering new users """
+    serializer_class = CreateUserSerializer
+
+    def post(self, request, *args, **kwargs):
+        """ Create a new user """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "token": Token.objects.get(user=user).key
+        })
 
 
 class EntryViewSet(viewsets.ModelViewSet):

@@ -160,6 +160,21 @@ class AuthTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
 
+    def test_user_registration(self):
+        # success case
+        response = self.client.post(
+            reverse('auth_registration'),
+            {'username': 'john', 'password': 'john'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        self.assertIn('user', response.data)
+
+        # existing username case
+        response = self.client.post(
+            reverse('auth_registration'),
+            {'username': 'john', 'password': 'something'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_user_gets_auth_token(self):
         """ Test an auth token is generated when a user is created """
         old_token_count = Token.objects.count()
@@ -206,15 +221,15 @@ class EntryQueryTestCase(TestCase):
 
         # create 3 entries each with set timestamps
         entry = Entry.objects.create(text="Entry 1", user=self.user_john)
-        entry.date_created=self.yesterday
+        entry.date_created = self.yesterday
         entry.save()
         entry = Entry.objects.create(text="Entry 2", user=self.user_john)
-        entry.date_created=self.yesterday
+        entry.date_created = self.yesterday
         entry.save()
         entry = Entry.objects.create(text="Entry 3", user=self.user_john)
 
         entry = Entry.objects.create(text="Entry 1", user=self.user_francis)
-        entry.date_created=self.yesterday
+        entry.date_created = self.yesterday
         entry.save()
         entry = Entry.objects.create(text="Entry 2", user=self.user_francis)
         entry = Entry.objects.create(text="Entry 3", user=self.user_francis)
