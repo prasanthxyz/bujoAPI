@@ -1,12 +1,11 @@
-""" Entry Urls module """
+"""Entry Urls module"""
 
-from django.conf.urls import url, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
 from api.views import EntryViewSet
 
 router = DefaultRouter()
-router.register(r'entries', EntryViewSet)
+router.register(r"entries", EntryViewSet)
 
-urlpatterns = [
-    url(r'^', include(router.urls))
-]
+urlpatterns = [path("", include(router.urls))]
