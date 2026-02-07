@@ -1,4 +1,4 @@
-Django==6.0
+Django==6.0.2
 djangorestframework==3.16.1
 pytz==2025.2
 pylint==3.3.9
